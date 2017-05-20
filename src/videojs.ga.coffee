@@ -34,6 +34,7 @@ videojs.plugin 'ga', (options = {}) ->
   seeking = false
 
   loaded = ->
+    percentsAlreadyTracked = [] #we should reset percentAlreadyTracked on each new video loaded. Otherwise we get "percentsPlayed" only for first video in row. Actual for ajax sites or/and playlists
     unless eventLabel
       eventLabel = @currentSrc().split("/").slice(-1)[0].replace(/\.(\w{3,4})(\?.*)?$/i,'')
 
