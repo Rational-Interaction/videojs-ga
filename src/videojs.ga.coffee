@@ -14,7 +14,7 @@ videojs.plugin 'ga', (options = {}) ->
     dataSetupOptions = parsedOptions.ga if parsedOptions.ga
 
   defaultsEventsToTrack = [
-    'loaded', 'percentsPlayed', 'start',
+    'loadedmetadata', 'percentsPlayed', 'start',
     'end', 'seek', 'play', 'pause', 'resize',
     'volumeChange', 'error', 'fullscreen'
   ]

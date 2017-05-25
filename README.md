@@ -40,34 +40,34 @@ The plugin will take in priority options provided in the javascript, followed by
 
 The following options are supported:
 
-####eventCategory
+#### eventCategory
 
 This is the ```category``` sent to GA. If you don't know what it is please check [GA's doc](https://developers.google.com/analytics/devguides/collection/gajs/eventTrackerGuide)
 **default:** ```'Video'```
 
 
-####eventLabel
+#### eventLabel
 
 This is the ```label``` sent to GA. If you don't know what it is please check [GA's doc](https://developers.google.com/analytics/devguides/collection/gajs/eventTrackerGuide)
 **default:** basename of the video path so if the path is ```http://s3.amazonaws.com/pouet.mp4``` the label would be ```pouet```
 
-####eventsToTrack
+#### eventsToTrack
 
 The events you want to track. Most of this events are videojs events. Some of them might reflects my needs.
 I'm open to add some more if you care to provide a good use case or a pull request.
 **default:** every events
-  ```[ 'loaded', 'percentsPlayed', 'start', 'end', 'seek', 'play', 'pause', 'resize', 'volumeChange', 'error', 'fullscreen']```
+  ```[ 'loadedmetadata', 'percentsPlayed', 'start', 'end', 'seek', 'play', 'pause', 'resize', 'volumeChange', 'error', 'fullscreen']```
 
 Most of the events are selft explanatory, here's the ones that may need more details:
 
 - ```percentsPlayed```: will send an event every X percents. X being defined by the option ```percentsPlayedInterval```.
 
-####percentsPlayedInterval
+#### percentsPlayedInterval
 
 This options goes with the ```percentsPlayed``` event. Every ```percentsPlayedInterval``` percents an event will be sent to GA.
 **default:** 10
 
-####debug
+#### debug
 
 If set to false, console logs will be ommited
 **default:** ```false```

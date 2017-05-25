@@ -1,5 +1,5 @@
 /*
-* videojs-ga - v0.4.2 - 2017-05-20
+* videojs-ga - v0.4.2 - 2017-05-25
 * Copyright (c) 2017 Michael Bensoussan
 * Licensed MIT
 */
@@ -18,7 +18,7 @@
         dataSetupOptions = parsedOptions.ga;
       }
     }
-    defaultsEventsToTrack = ['loaded', 'percentsPlayed', 'start', 'end', 'seek', 'play', 'pause', 'resize', 'volumeChange', 'error', 'fullscreen'];
+    defaultsEventsToTrack = ['loadedmetadata', 'percentsPlayed', 'start', 'end', 'seek', 'play', 'pause', 'resize', 'volumeChange', 'error', 'fullscreen'];
     eventsToTrack = options.eventsToTrack || dataSetupOptions.eventsToTrack || defaultsEventsToTrack;
     percentsPlayedInterval = options.percentsPlayedInterval || dataSetupOptions.percentsPlayedInterval || 10;
     eventCategory = options.eventCategory || dataSetupOptions.eventCategory || 'Video';
