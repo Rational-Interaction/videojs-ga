@@ -16,12 +16,13 @@ registerPlugin 'ga', (options = {}) ->
     dataSetupOptions = parsedOptions.ga if parsedOptions.ga
 
   defaultsEventsToTrack = [
-    'loadedmetadata', 'percentsPlayed', 'start',
-    'end', 'seek', 'play', 'pause', 'resize',
+    'loadedmetadata', 'percentsPlayed', 'secondsPlayed',
+    'start', 'end', 'seek', 'play', 'pause', 'resize',
     'volumeChange', 'error', 'fullscreen'
   ]
   eventsToTrack = options.eventsToTrack || dataSetupOptions.eventsToTrack || defaultsEventsToTrack
   percentsPlayedInterval = options.percentsPlayedInterval || dataSetupOptions.percentsPlayedInterval || 10
+  secondsPlayedInterval = options.secondsPlayedInterval || dataSetupOptions.secondsPlayedInterval || 15
 
   eventCategory = options.eventCategory || dataSetupOptions.eventCategory || 'Video'
   # if you didn't specify a name, it will be 'guessed' from the video src after metadatas are loaded
@@ -34,6 +35,9 @@ registerPlugin 'ga', (options = {}) ->
   percentsAlreadyTracked = []
   seekStart = seekEnd = 0
   seeking = false
+  secondsAlreadyTracked = []
+  playTimerStart = 0
+  playTimer = null
 
   loaded = ->
     percentsAlreadyTracked = [] #we should reset percentAlreadyTracked on each new video loaded. Otherwise we get "percentsPlayed" only for first video in row. Actual for ajax sites or/and playlists
@@ -77,16 +81,31 @@ registerPlugin 'ga', (options = {}) ->
     return
 
   play = ->
-    currentTime = Math.round(@currentTime())
-    sendbeacon( 'play', true, currentTime )
     seeking = false
+
+    if "play" in eventsToTrack
+      currentTime = Math.round(@currentTime())
+      sendbeacon( 'play', true, currentTime )
+
+    if "secondsPlayed" in eventsToTrack
+      playTimerStart = new Date().getTime()
+      callback = (event) ->
+        sendPlayTimerBeacon()
+        return
+      playTimer = setInterval(callback, secondsPlayedInterval * 1000)
+
     return
 
   pause = ->
-    currentTime = Math.round(@currentTime())
-    duration = Math.round(@duration())
-    if currentTime != duration && !seeking
-      sendbeacon( 'pause', false, currentTime )
+    if "pause" in eventsToTrack
+      currentTime = Math.round(@currentTime())
+      duration = Math.round(@duration())
+      if currentTime != duration && !seeking
+        sendbeacon( 'pause', false, currentTime )
+
+    if "secondsPlayed" in eventsToTrack
+      clearPlayTimer()
+
     return
 
   # value between 0 (muted) and 1
@@ -113,6 +132,24 @@ registerPlugin 'ga', (options = {}) ->
       sendbeacon( 'exit fullscreen', false, currentTime )
     return
 
+  getTotalPlayTime = ->
+    totalTime = 0
+    for time in secondsAlreadyTracked
+      totalTime += time
+    return totalTime
+
+  sendPlayTimerBeacon = ->
+    playTimerEnd = new Date().getTime()
+    timeSpent = playTimerEnd - playTimerStart
+    sendbeacon('seconds played', true, Math.round((timeSpent + getTotalPlayTime())/1000) )
+    return timeSpent
+
+  clearPlayTimer = ->
+    timeSpent = sendPlayTimerBeacon()
+    secondsAlreadyTracked.push(timeSpent)
+    clearInterval(playTimer)
+    return
+
   sendbeacon = ( action, nonInteraction, value ) ->
     # console.log action, " ", nonInteraction, " ", value
     if window.ga
@@ -132,8 +169,8 @@ registerPlugin 'ga', (options = {}) ->
     @on("loadedmetadata", loaded)
     @on("timeupdate", timeupdate)
     @on("ended", end) if "end" in eventsToTrack
-    @on("play", play) if "play" in eventsToTrack
-    @on("pause", pause) if "pause" in eventsToTrack
+    @on("play", play)
+    @on("pause", pause)
     @on("volumechange", volumeChange) if "volumeChange" in eventsToTrack
     @on("resize", resize) if "resize" in eventsToTrack
     @on("error", error) if "error" in eventsToTrack

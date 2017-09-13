@@ -10,7 +10,7 @@
   registerPlugin = videojs.registerPlugin || videojs.plugin;
 
   registerPlugin('ga', function(options) {
-    var dataSetupOptions, defaultsEventsToTrack, end, error, eventCategory, eventLabel, eventsToTrack, fullscreen, loaded, parsedOptions, pause, percentsAlreadyTracked, percentsPlayedInterval, play, resize, seekEnd, seekStart, seeking, sendbeacon, timeupdate, volumeChange;
+    var clearPlayTimer, dataSetupOptions, defaultsEventsToTrack, end, error, eventCategory, eventLabel, eventsToTrack, fullscreen, getTotalPlayTime, loaded, parsedOptions, pause, percentsAlreadyTracked, percentsPlayedInterval, play, playTimer, playTimerStart, resize, secondsAlreadyTracked, secondsPlayedInterval, seekEnd, seekStart, seeking, sendPlayTimerBeacon, sendbeacon, timeupdate, volumeChange;
     if (options == null) {
       options = {};
     }
@@ -21,15 +21,19 @@
         dataSetupOptions = parsedOptions.ga;
       }
     }
-    defaultsEventsToTrack = ['loadedmetadata', 'percentsPlayed', 'start', 'end', 'seek', 'play', 'pause', 'resize', 'volumeChange', 'error', 'fullscreen'];
+    defaultsEventsToTrack = ['loadedmetadata', 'percentsPlayed', 'secondsPlayed', 'start', 'end', 'seek', 'play', 'pause', 'resize', 'volumeChange', 'error', 'fullscreen'];
     eventsToTrack = options.eventsToTrack || dataSetupOptions.eventsToTrack || defaultsEventsToTrack;
     percentsPlayedInterval = options.percentsPlayedInterval || dataSetupOptions.percentsPlayedInterval || 10;
+    secondsPlayedInterval = options.secondsPlayedInterval || dataSetupOptions.secondsPlayedInterval || 15;
     eventCategory = options.eventCategory || dataSetupOptions.eventCategory || 'Video';
     eventLabel = options.eventLabel || dataSetupOptions.eventLabel;
     options.debug = options.debug || false;
     percentsAlreadyTracked = [];
     seekStart = seekEnd = 0;
     seeking = false;
+    secondsAlreadyTracked = [];
+    playTimerStart = 0;
+    playTimer = null;
     loaded = function() {
       percentsAlreadyTracked = [];
       if (!eventLabel) {
@@ -70,17 +74,31 @@
       sendbeacon('end', true);
     };
     play = function() {
-      var currentTime;
-      currentTime = Math.round(this.currentTime());
-      sendbeacon('play', true, currentTime);
+      var callback, currentTime;
       seeking = false;
+      if (__indexOf.call(eventsToTrack, "play") >= 0) {
+        currentTime = Math.round(this.currentTime());
+        sendbeacon('play', true, currentTime);
+      }
+      if (__indexOf.call(eventsToTrack, "secondsPlayed") >= 0) {
+        playTimerStart = new Date().getTime();
+        callback = function(event) {
+          sendPlayTimerBeacon();
+        };
+        playTimer = setInterval(callback, secondsPlayedInterval * 1000);
+      }
     };
     pause = function() {
       var currentTime, duration;
-      currentTime = Math.round(this.currentTime());
-      duration = Math.round(this.duration());
-      if (currentTime !== duration && !seeking) {
-        sendbeacon('pause', false, currentTime);
+      if (__indexOf.call(eventsToTrack, "pause") >= 0) {
+        currentTime = Math.round(this.currentTime());
+        duration = Math.round(this.duration());
+        if (currentTime !== duration && !seeking) {
+          sendbeacon('pause', false, currentTime);
+        }
+      }
+      if (__indexOf.call(eventsToTrack, "secondsPlayed") >= 0) {
+        clearPlayTimer();
       }
     };
     volumeChange = function() {
@@ -105,6 +123,28 @@
         sendbeacon('exit fullscreen', false, currentTime);
       }
     };
+    getTotalPlayTime = function() {
+      var time, totalTime, _i, _len;
+      totalTime = 0;
+      for (_i = 0, _len = secondsAlreadyTracked.length; _i < _len; _i++) {
+        time = secondsAlreadyTracked[_i];
+        totalTime += time;
+      }
+      return totalTime;
+    };
+    sendPlayTimerBeacon = function() {
+      var playTimerEnd, timeSpent;
+      playTimerEnd = new Date().getTime();
+      timeSpent = playTimerEnd - playTimerStart;
+      sendbeacon('seconds played', true, Math.round((timeSpent + getTotalPlayTime()) / 1000));
+      return timeSpent;
+    };
+    clearPlayTimer = function() {
+      var timeSpent;
+      timeSpent = sendPlayTimerBeacon();
+      secondsAlreadyTracked.push(timeSpent);
+      clearInterval(playTimer);
+    };
     sendbeacon = function(action, nonInteraction, value) {
       if (window.ga) {
         ga('send', 'event', {
@@ -126,12 +166,8 @@
       if (__indexOf.call(eventsToTrack, "end") >= 0) {
         this.on("ended", end);
       }
-      if (__indexOf.call(eventsToTrack, "play") >= 0) {
-        this.on("play", play);
-      }
-      if (__indexOf.call(eventsToTrack, "pause") >= 0) {
-        this.on("pause", pause);
-      }
+      this.on("play", play);
+      this.on("pause", pause);
       if (__indexOf.call(eventsToTrack, "volumeChange") >= 0) {
         this.on("volumechange", volumeChange);
       }
