@@ -6,7 +6,9 @@
 # Licensed under the MIT license.
 ##
 
-videojs.plugin 'ga', (options = {}) ->
+registerPlugin = videojs.registerPlugin || videojs.plugin
+
+registerPlugin 'ga', (options = {}) ->
   # this loads options from the data-setup attribute of the video tag
   dataSetupOptions = {}
   if @options_["data-setup"]
