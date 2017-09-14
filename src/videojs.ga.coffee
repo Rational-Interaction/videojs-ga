@@ -23,6 +23,8 @@ registerPlugin 'ga', (options = {}) ->
   eventsToTrack = options.eventsToTrack || dataSetupOptions.eventsToTrack || defaultsEventsToTrack
   percentsPlayedInterval = options.percentsPlayedInterval || dataSetupOptions.percentsPlayedInterval || 10
   secondsPlayedInterval = options.secondsPlayedInterval || dataSetupOptions.secondsPlayedInterval || 15
+  # tracker name required to target named trackers
+  trackerName = options.trackerName || dataSetupOptions.trackerName
 
   eventCategory = options.eventCategory || dataSetupOptions.eventCategory || 'Video'
   # if you didn't specify a name, it will be 'guessed' from the video src after metadatas are loaded
@@ -152,8 +154,9 @@ registerPlugin 'ga', (options = {}) ->
 
   sendbeacon = ( action, nonInteraction, value ) ->
     # console.log action, " ", nonInteraction, " ", value
+    sendTarget = if trackerName then trackerName + '.send' else 'send'
     if window.ga
-      ga 'send', 'event',
+      ga sendTarget, 'event',
         'eventCategory' 	: eventCategory
         'eventAction'		  : action
         'eventLabel'		  : eventLabel

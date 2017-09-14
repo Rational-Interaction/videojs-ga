@@ -10,7 +10,7 @@
   registerPlugin = videojs.registerPlugin || videojs.plugin;
 
   registerPlugin('ga', function(options) {
-    var clearPlayTimer, dataSetupOptions, defaultsEventsToTrack, end, error, eventCategory, eventLabel, eventsToTrack, fullscreen, getTotalPlayTime, loaded, parsedOptions, pause, percentsAlreadyTracked, percentsPlayedInterval, play, playTimer, playTimerStart, resize, secondsAlreadyTracked, secondsPlayedInterval, seekEnd, seekStart, seeking, sendPlayTimerBeacon, sendbeacon, timeupdate, volumeChange;
+    var clearPlayTimer, dataSetupOptions, defaultsEventsToTrack, end, error, eventCategory, eventLabel, eventsToTrack, fullscreen, getTotalPlayTime, loaded, parsedOptions, pause, percentsAlreadyTracked, percentsPlayedInterval, play, playTimer, playTimerStart, resize, secondsAlreadyTracked, secondsPlayedInterval, seekEnd, seekStart, seeking, sendPlayTimerBeacon, sendbeacon, timeupdate, trackerName, volumeChange;
     if (options == null) {
       options = {};
     }
@@ -25,6 +25,7 @@
     eventsToTrack = options.eventsToTrack || dataSetupOptions.eventsToTrack || defaultsEventsToTrack;
     percentsPlayedInterval = options.percentsPlayedInterval || dataSetupOptions.percentsPlayedInterval || 10;
     secondsPlayedInterval = options.secondsPlayedInterval || dataSetupOptions.secondsPlayedInterval || 15;
+    trackerName = options.trackerName || dataSetupOptions.trackerName;
     eventCategory = options.eventCategory || dataSetupOptions.eventCategory || 'Video';
     eventLabel = options.eventLabel || dataSetupOptions.eventLabel;
     options.debug = options.debug || false;
@@ -146,8 +147,10 @@
       clearInterval(playTimer);
     };
     sendbeacon = function(action, nonInteraction, value) {
+      var sendTarget;
+      sendTarget = trackerName ? trackerName + '.send' : 'send';
       if (window.ga) {
-        ga('send', 'event', {
+        ga(sendTarget, 'event', {
           'eventCategory': eventCategory,
           'eventAction': action,
           'eventLabel': eventLabel,
